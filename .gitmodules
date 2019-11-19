@@ -1,0 +1,3 @@
+[submodule "rsa_accumulator"]
+	path = rsa_accumulator
+	url = https://github.com/anantk17/RSA-accumulator
