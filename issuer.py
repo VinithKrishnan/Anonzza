@@ -69,7 +69,6 @@ class CurrentAccumulator(Resource):
 class AddCourse(Resource):
     @ns.doc('add_course')
     @ns.expect(course_enr)
-    #@ns.marshal_with(named_cred)
     def post(self):
         """TODO: Add logic to add course and update accumulator values
         input : netId, list of courses to add
@@ -133,7 +132,7 @@ class AddCourse(Resource):
         return json.dumps(cred_list)
         #return json.dumps(CredentialEncoder().encode(new_named_cred))
 #test
-temp_user = UserObject("vin","student",["CS432","CS534"],123,456)
+temp_user = UserObject("vin","{\\\"uuid\\\": 3889, \\\"user_type\\\": \\\"student\\\", \\\"courses\\\": [\\\"CS432\\\", \\\"CS534\\\", \\\"cs425\\\", \\\"cs498\\\"], \\\"signature\\\": \\\"514fbe16aec98f80186eecc51ac68461ffa4cf75cb552e3e211a5c024ac78447afd8de8dd56657649630b5ffff94de12efb0a9041793818f8139ea3925e72a1b08d9a37cc6b3462bfb8471bc9639af22155251f938c9a7ffde6add5a5d26ff279e51f9d92064436fb7b61cc8cdcabdd09ca34ae2ae8b5dda406bba4d883b81322221f01fb61f67df7463711263ab1962709b1fa38c9a1e5be6e6eb40593f7083ea2e0d1698211e0b5d35901a332467c75ebadcd204bcbc92477b76801e6304d08196c74310a41761cafb836ab154ef473c37115ed93fa8df4107e3a360578d1902215764f9c6a70ced26eb2207074671cc9e2e25518e3095e78da11a0578786c\\\", \\\"name\\\": \\\"vin\\\"}student",["CS432","CS534"],123,456)
 registered_users["vinithk2"]=temp_user
 acc.addCredentials([123,456])
 
@@ -205,4 +204,4 @@ class DropCourses(Resource):
 
 if __name__ == '__main__':
     #trusted setup
-    app.run(debug=True)
+    app.run(debug=True,port=6060)
