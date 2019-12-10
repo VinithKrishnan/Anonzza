@@ -17,6 +17,9 @@ def get_N():
     r = requests.get('http://127.0.0.1:6060/iss_opps/Nvalue')
     return int(r.json())
 
+def get_pubkey():
+    r = requests.get('http://127.0.0.1:6060/iss_opps/PubKey')
+    return (r.json())
 
 def login_required(f):
     def wrapper(*args, **kwargs):
@@ -26,6 +29,7 @@ def login_required(f):
         cred = req['credential']
         named_cred = NamedCredential(cred['uuid'],cred['user_type'],cred['name'],cred['courses'])
         named_cred.signature = cred['signature']
+        public_key=get_pubkey() #have to check datatype
         if named_cred.verify(public_key):
             print("Signature verification passed")
         else:
