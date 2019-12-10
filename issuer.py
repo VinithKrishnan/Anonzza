@@ -40,8 +40,8 @@ named_cred = api.model('NamedCred',{
 #n, a0, S
 acc = Accumulator()
 
-def as_credobject(dct):
-    return
+#def as_credobject(dct):
+#    return
     #if 'name' in dct:
     #    return NamedCredential(dict['id'],dict['user_type'],dict['name'],dict['courses'])
     #else:
@@ -63,6 +63,29 @@ class CurrentAccumulator(Resource):
         #return j
         return json.dumps(t)
 
+@ns.route('/currentNonce')
+class CurrentNonce(Resource):
+    def get(self):
+        t = acc.getNonce()
+        return json.dumps(t)
+
+@ns.route('/Nvalue')
+class CurrentNonce(Resource):
+    def get(self):
+        t = acc.n
+        return json.dumps(t)
+
+@ns.route('/PubKey')
+class getPubKey(Resource):
+    def get(self):
+        #print(public_key.export_key())
+        #return "hi"
+        return public_key.export_key().decode("utf-8")
+
+
+
+
+
 
 
 @ns.route('/addCourses')
@@ -75,6 +98,7 @@ class AddCourse(Resource):
         Will return a list of signed credential objects
         """
         #data = request.form
+        print("samp")
         data = api.payload
         user_netid = data['netid']
         new_courses = []
@@ -132,9 +156,11 @@ class AddCourse(Resource):
         return json.dumps(cred_list)
         #return json.dumps(CredentialEncoder().encode(new_named_cred))
 #test
-temp_user = UserObject("vin","{\\\"uuid\\\": 3889, \\\"user_type\\\": \\\"student\\\", \\\"courses\\\": [\\\"CS432\\\", \\\"CS534\\\", \\\"cs425\\\", \\\"cs498\\\"], \\\"signature\\\": \\\"514fbe16aec98f80186eecc51ac68461ffa4cf75cb552e3e211a5c024ac78447afd8de8dd56657649630b5ffff94de12efb0a9041793818f8139ea3925e72a1b08d9a37cc6b3462bfb8471bc9639af22155251f938c9a7ffde6add5a5d26ff279e51f9d92064436fb7b61cc8cdcabdd09ca34ae2ae8b5dda406bba4d883b81322221f01fb61f67df7463711263ab1962709b1fa38c9a1e5be6e6eb40593f7083ea2e0d1698211e0b5d35901a332467c75ebadcd204bcbc92477b76801e6304d08196c74310a41761cafb836ab154ef473c37115ed93fa8df4107e3a360578d1902215764f9c6a70ced26eb2207074671cc9e2e25518e3095e78da11a0578786c\\\", \\\"name\\\": \\\"vin\\\"}student",["CS432","CS534"],123,456)
+#temp_user = UserObject("vin","{\\\"uuid\\\": 3889, \\\"user_type\\\": \\\"student\\\", \\\"courses\\\": [\\\"CS432\\\", \\\"CS534\\\", \\\"cs425\\\", \\\"cs498\\\"], \\\"signature\\\": #\\\"514fbe16aec98f80186eecc51ac68461ffa4cf75cb552e3e211a5c024ac78447afd8de8dd56657649630b5ffff94de12efb0a9041793818f8139ea3925e72a1b08d9a37cc6b3462bfb8471bc9639af22155251f938c9a7ffde6add5a5d26ff279e51f9d92064436fb7b61cc8cdcabdd09ca34ae2ae8b5dda406bba4d883b81322221f01fb61f67df7463711263ab1962709b1fa38c9a1e5be6e6eb40593f7083ea2e0d1698211e0b5d35901a332467c75ebadcd204bcbc92477b76801e6304d08196c74310a41761cafb836ab154ef473c37115ed93fa8df4107e3a360578d1902215764f9c6a70ced26eb2207074671cc9e2e25518e309#5e78da11a0578786c\\\", \\\"name\\\": \\\"vin\\\"}student",["CS432","CS534"],123,456)
+temp_user = UserObject("vin","student",["CS432","CS534"],123,456)
 registered_users["vinithk2"]=temp_user
 acc.addCredentials([123,456])
+
 
 @ns.route('/dropCourses')
 class DropCourses(Resource):

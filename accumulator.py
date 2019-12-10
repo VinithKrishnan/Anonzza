@@ -8,6 +8,7 @@ class Accumulator:
 
         self.n = n
         self.initial_acc = a0
+        self.nonce = 0
         self.set = s
         self.current_value = a0
 
@@ -19,6 +20,7 @@ class Accumulator:
         acc_final = self.current_value
         for id in credential_ids:
             acc_final = add(acc_final,self.set,id,self.n)
+            self.nonce = self.set[id]
         self.current_value = acc_final
 
         return
@@ -34,6 +36,12 @@ class Accumulator:
     def getCurrentValue(self):
         #Return N and the current acc value
         return self.current_value
+
+    def getNonce(self):
+        return self.nonce
+
+    
+
 
 class AccumulatorEncoder(JSONEncoder):
     def default(self, object):
