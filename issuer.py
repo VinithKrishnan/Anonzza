@@ -7,8 +7,10 @@ from Crypto.Random.random import randint
 from credential import AnonymousCredential,NamedCredential,CredentialEncoder
 from user_obj import UserObject
 import json
+import ast
 
 #issuer key generation
+#TODO: Check if key is available in current working dir, an import
 key = RSA.generate(2048)
 private_key = key
 public_key = key.publickey()
@@ -36,31 +38,14 @@ named_cred = api.model('NamedCred',{
 })
 
 
-#TrustedSetup object
-#n, a0, S
 acc = Accumulator()
 
-#def as_credobject(dct):
-#    return
-    #if 'name' in dct:
-    #    return NamedCredential(dict['id'],dict['user_type'],dict['name'],dict['courses'])
-    #else:
-    #    return AnonymousCredential(dict['id'],dict['user_type'],dict['courses'])
-    #return Accumulator(dict['n'],dict['initial_acc'],dict['set'],dict['current_value'])
-#registered students holds a netId -> credential mapping
 registered_users = {}
 
 @ns.route('/currentAccumulator')
 class CurrentAccumulator(Resource):
     def get(self):
         t = acc.getCurrentValue()
-        #print(t)
-        #enc = AccumulatorEncoder().encode(acc)
-        #print(enc["n"])
-        #j = json.dumps(enc)
-        #o = json.loads(j,object_hook=as_credobject)
-        #print(Type(o))
-        #return j
         return json.dumps(t)
 
 @ns.route('/currentNonce')
@@ -75,18 +60,20 @@ class CurrentNonce(Resource):
         t = acc.n
         return json.dumps(t)
 
+@ns.route('/accumulatorPrivate')
+class PrivateAcc(Resource):
+    def get(self):
+        private_acc  = {'set':acc.set,'a0':acc.initial_acc,'n':acc.n}
+        return json.dumps(private_acc)
+
 @ns.route('/PubKey')
 class getPubKey(Resource):
     def get(self):
         #print(public_key.export_key())
         #return "hi"
-        return public_key.export_key().decode("utf-8")
+        return public_key.exportKey().decode("utf-8")
 
-
-
-
-
-
+#TODO: Add API to get credential 
 
 @ns.route('/addCourses')
 class AddCourse(Resource):
@@ -97,11 +84,11 @@ class AddCourse(Resource):
         input : netId, list of courses to add
         Will return a list of signed credential objects
         """
-        #data = request.form
-        print("samp")
-        data = api.payload
+    
+        data = ast.literal_eval(request.data.decode('utf-8'))
         user_netid = data['netid']
         new_courses = []
+        #TODO: Add only unique entries in courses
         if data['course1'] is not None:
             new_courses.append(data['course1'])
         if data['course2'] is not None:
@@ -119,6 +106,7 @@ class AddCourse(Resource):
         acc.removeCrendentials(prev_cred_list)
 
         #create new credentials
+        #TODO: use uuid64 to generate cred ids
         new_anon_cred_id = randint(0,10000)
         new_anon_cred = AnonymousCredential(new_anon_cred_id,User.user_type,final_courses)
         new_named_cred_id = randint(0,10000)
@@ -144,19 +132,9 @@ class AddCourse(Resource):
         cred_list=[]
         cred_list.append(CredentialEncoder().encode(new_anon_cred))
         cred_list.append(CredentialEncoder().encode(new_named_cred))
-        #enc = CredentialEncoder().encode(new_anon_cred)
-        #return json.dumps(enc)
-        #neo_cred = {}
-        #neo_cred['name']=new_named_cred.name
-        #neo_cred['uuid']=new_named_cred.uuid
-        #neo_cred['user_type']=new_named_cred.user_type
-        #neo_cred['courses']=new_named_cred.courses
-        #neo_cred['signature']=new_named_cred.signature.hex()
-        #return neo_cred
+
         return json.dumps(cred_list)
-        #return json.dumps(CredentialEncoder().encode(new_named_cred))
-#test
-#temp_user = UserObject("vin","{\\\"uuid\\\": 3889, \\\"user_type\\\": \\\"student\\\", \\\"courses\\\": [\\\"CS432\\\", \\\"CS534\\\", \\\"cs425\\\", \\\"cs498\\\"], \\\"signature\\\": #\\\"514fbe16aec98f80186eecc51ac68461ffa4cf75cb552e3e211a5c024ac78447afd8de8dd56657649630b5ffff94de12efb0a9041793818f8139ea3925e72a1b08d9a37cc6b3462bfb8471bc9639af22155251f938c9a7ffde6add5a5d26ff279e51f9d92064436fb7b61cc8cdcabdd09ca34ae2ae8b5dda406bba4d883b81322221f01fb61f67df7463711263ab1962709b1fa38c9a1e5be6e6eb40593f7083ea2e0d1698211e0b5d35901a332467c75ebadcd204bcbc92477b76801e6304d08196c74310a41761cafb836ab154ef473c37115ed93fa8df4107e3a360578d1902215764f9c6a70ced26eb2207074671cc9e2e25518e309#5e78da11a0578786c\\\", \\\"name\\\": \\\"vin\\\"}student",["CS432","CS534"],123,456)
+
 temp_user = UserObject("vin","student",["CS432","CS534"],123,456)
 registered_users["vinithk2"]=temp_user
 acc.addCredentials([123,456])
@@ -217,15 +195,7 @@ class DropCourses(Resource):
         cred_list=[]
         cred_list.append(CredentialEncoder().encode(new_anon_cred))
         cred_list.append(CredentialEncoder().encode(new_anon_cred))
-        #enc = CredentialEncoder().encode(new_anon_cred)
-        #return json.dumps(enc)
-        #print (new_named_cred.signature)
-        #neo_cred['name']=new_named_cred.name
-        #neo_cred['uuid']=new_named_cred.uuid
-        #neo_cred['user_type']=new_named_cred.user_type
-        #neo_cred['courses']=new_named_cred.courses
-        #neo_cred['signature']=new_named_cred.signature.hex()
-        #return neo_cred
+
         return json.dumps(cred_list)
 
 if __name__ == '__main__':

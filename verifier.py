@@ -26,10 +26,11 @@ named_cred = api.model('NamedCred',{
 request_body = api.model('RequestBody',{
     'content':fields.String,
     'credential' : fields.Nested(named_cred),
-    'proof' : fields.Integer
+    'proof' : fields.Integer,
+    'nonce' : fields.Integer
 })
 
-
+#TODO: Apis to add posts -> /class/:className/posts
 
 
 @ns.route('/currentAccumulator')

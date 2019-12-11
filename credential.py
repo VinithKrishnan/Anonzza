@@ -1,7 +1,7 @@
 from Crypto.Signature import pkcs1_15
 from Crypto.Hash import SHA384
 from Crypto.PublicKey import RSA
-from json import JSONEncoder
+from json import JSONEncoder,JSONDecoder
 import json
 
 
@@ -11,70 +11,95 @@ import json
 #Courses enrolled by the user - list
 
 class Credential:
-    def __init__(self, id, user_type,courses):
+
+    def __init__(self, id, user_type,courses,signature):
         self.uuid = id
         self.user_type = user_type
         self.courses = courses
-        self.signature = ""
+        self.signature = signature
 
-    def sign(self, private_key):
-        #TODO: Add logic to sign credentials and set the value in the signature field
-        return
+    def sign(self,msg, private_key):
+        signer = pkcs1_15.new(private_key)
+        h = SHA384.new(msg)
+        self.signature = signer.sign(h).hex()
+        return self.signature
 
-    def verify(self, public_key):
-        #TODO: Add logic to sign credentials and set the value in the signature field
+    def verify(self, msg,public_key):
+        verifier = pkcs1_15.new(public_key)
+        h = SHA384.new(msg)
+        success = False
+       
+        try:
+            verifier.verify(h,bytes.fromhex(self.signature))
+            print("The signature is valid.")
+            success = True
+        except ValueError:
+            print ("The signature is not valid.")
+            success = False
+
+        print("Check value for signature verification",success)
+        return success
         return
 
 class NamedCredential(Credential):
-    def __init__(self,id,user_type,name,courses):
-        super(NamedCredential,self).__init__(id,user_type,courses)
+    def __init__(self,uuid,user_type,name,courses,signature=""):
+        super(NamedCredential,self).__init__(uuid,user_type,courses,signature)
         self.name = name
 
     def sign(self,private_key):
         msg = (str(self.uuid) + self.name + self.user_type + ''.join(self.courses)).encode()
-        signer = pkcs1_15.new(private_key)
-        h = SHA384.new(msg)
-        self.signature = signer.sign(h).hex()
-        return self.signature
+        super(NamedCredential,self).sign(msg,private_key)
 
     def verify(self,public_key):
         msg = (str(self.uuid) + self.name + self.user_type + ''.join(self.courses)).encode()
-        verifier = pkcs1_15.new(public_key)
-        h = SHA384.new(msg)
-        try:
-            verifier.verify(h,bytes.fromhex(self.signature))
-            print("The signature is valid.")
-        except (ValueError, TypeError):
-            print ("The signature is not valid.")
+        return super(NamedCredential,self).verify(msg,public_key) 
 
 class AnonymousCredential(Credential):
-    def __init__(self,id,user_type,courses):
-        super(AnonymousCredential,self).__init__(id,user_type,courses)
+
+    def __init__(self,uuid,user_type,courses,signature=""):
+        super(AnonymousCredential,self).__init__(uuid,user_type,courses,signature)
 
     def sign(self,private_key):
         msg = (str(self.uuid) + self.user_type + ''.join(self.courses)).encode()
-        signer = pkcs1_15.new(private_key)
-        h = SHA384.new(msg)
-        self.signature = signer.sign(h).hex()
-        return self.signature
+        super(AnonymousCredential,self).sign(msg,private_key)
 
     def verify(self,public_key):
         msg = (str(self.uuid) + self.user_type + ''.join(self.courses)).encode()
-        verifier = pkcs1_15.new(public_key)
-        h = SHA384.new(msg)
-        try:
-            verifier.verify(h,bytes.fromhex(self.signature))
-            print("The signature is valid.")
-        except (ValueError, TypeError):
-            print ("The signature is not valid.")
+        return super(AnonymousCredential,self).verify(msg,public_key)
 
 class CredentialEncoder(JSONEncoder):
     def default(self, object):
         if isinstance(object, AnonymousCredential) or isinstance(object,NamedCredential):
-
-            return object.__dict__
+            obj_dict = {
+                "__class__" : object.__class__.__name__,
+                "__module__" : object.__module__
+            }
+            obj_dict.update(object.__dict__)
+            return obj_dict
 
         else:
             # call base class implementation which takes care of
             # raising exceptions for unsupported types
             return json.JSONEncoder.default(self, object)
+
+class CredentialDecoder(JSONDecoder):
+    def __init__(self):
+        return
+
+    def __init__(self, *args, **kwargs):
+        json.JSONDecoder.__init__(self, object_hook=self.object_hook, *args, **kwargs)
+
+    def object_hook(self, obj):
+        if '__class__' not in obj:
+            return obj
+        class_name = obj.pop("__class__")
+        module_name = obj.pop("__module__")
+
+        module = __import__(module_name)
+        
+        class_ = getattr(module,class_name)
+
+        newObj = class_(**obj)
+
+        return newObj
+        
