@@ -34,17 +34,18 @@ request_body = api.model('RequestBody',{
 })
 
 #TODO: Apis to add posts -> /class/:className/posts
-"""
+
 @ns.route('/class/<string:courseid>/addPost')
 class AddPost(Resource):
     method_decorators = [login_required]
     @ns.expect(request_body)
     def post(self,courseid):
-        data = ast.literal_eval(request.data.decode('utf-8')
-        if len(class_posts)==0 :
+        data = ast.literal_eval(request.data.decode('utf-8'))
+        if len(class_posts) == 0:
             class_posts[courseid] = [data['content']]
         else:
             class_posts[courseid].append(data['content'])
+
 
 @ns.route('/class/<string:courseid>/readPosts')
 class ReadPosts(Resource):
@@ -55,7 +56,6 @@ class ReadPosts(Resource):
             print("No posts yet!")
         else:
             print(class_posts[courseid])
-"""
 
 
 

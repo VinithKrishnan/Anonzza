@@ -3,12 +3,23 @@ from auth import get_private_acc_data,get_accumulator_value,get_N
 from rsa_accumulator.main import prove_membership
 import json
 from credential import CredentialDecoder,CredentialEncoder
+from Crypto.PublicKey import RSA
 
 ISSUER_API_ROOT = "/"
 
-req = requests.post("http://127.0.0.1:6060/iss_opps/addCourses",data = json.dumps({'netid':'vinithk2','courses':["cs432","cs433"]}))
+#Get credentials from the issuer
+#Setup 2 keys for receiving 2 tokens from the receiver
+anonTokenKeyPair = RSA.generate(2048)
+anonTokenPrivKey = anonTokenKeyPair.exportKey()
+anonTokenPubKey = recipient_key = anonTokenKeyPair.publickey().exportKey()
 
-credList = json.loads(req.json())
+namedTokenKeyPair = RSA.generate(2048)
+namedTokenPrivKey = namedTokenKeyPair.exportKey()
+namedTokenPubKey = recipient_key = namedTokenKeyPair.publickey().exportKey()
+
+req = requests.post("http://127.0.0.1:6060/iss_opps/getCred/vinithk2",json = {'namedKey':namedTokenPubKey.hex(),'anonKey':anonTokenPubKey.hex()})
+
+credList = req.json()
 
 anon_cred = json.loads(credList[0],cls=CredentialDecoder)
 named_cred = json.loads(credList[1],cls=CredentialDecoder)

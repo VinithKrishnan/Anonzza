@@ -6,13 +6,20 @@ from Crypto.PublicKey import RSA
 from Crypto.Random.random import randint
 from credential import AnonymousCredential,NamedCredential,CredentialEncoder
 from user_obj import UserObject
-import json
-import ast
+import json, ast,uuid, os
 
-#issuer key laoding
-key = RSA.generate(2048)
-private_key = RSA.import_key(open("private.pem").read()).exportKey()
-public_key = recipient_key = RSA.import_key(open("receiver.pem").read()).exportKey()
+#issuer keygen
+if os.path.isfile("private.pem") and os.path.isfile('receiver.pem'):
+    private_key = RSA.import_key(open("private.pem").read()).exportKey()
+    public_key = recipient_key = RSA.import_key(open("receiver.pem").read()).exportKey()
+else :
+    keyPair = RSA.generate(2048)
+    private_key = keyPair.exportKey()
+    public_key = keyPair.publickey().exportKey()
+    with open("private.pem", "wb") as priv_file, open("receiver.pem","wb") as pub_file:
+        priv_file.write(private_key)
+        pub_file.write(public_key)
+
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app)
@@ -24,6 +31,11 @@ ns = api.namespace('iss_opps', description='Issuer operations')
 course_enr = api.model('Course_Enr', {
     'netid': fields.String(required=True, description='NetId'),
     'courses':fields.List(fields.String)
+})
+
+token_keys = api.model('TokenKey', {
+    'namedKey' : fields.String(),
+    'anonKey' : fields.String()
 })
 
 
@@ -71,7 +83,31 @@ class getPubKey(Resource):
         #return "hi"
         return public_key.decode("utf-8")
 
-#TODO: Add API to get credential
+@ns.route('/getCred/<string:netid>')
+class GetCredential(Resource):
+    @ns.doc('get_credential')
+    @ns.expect(token_keys)
+    def post(self,netid):
+        print(request.json)
+    #Here we pass a list of public keys as the input, and we get assigned 2 signed credentials
+        anonTokKey = request.json['anonKey']
+        namedTokKey = request.json['namedKey']
+
+        User = registered_users[netid]
+
+        acc.removeCrendentials([User.anon_cred_id,User.named_cred_id])
+    
+        new_anon_cred = AnonymousCredential(uuid.uuid4().int,User.user_type,User.courses,tokenPubKey=anonTokKey)
+        new_anon_cred.sign(RSA.import_key(private_key))
+
+        new_named_cred = NamedCredential(uuid.uuid4().int,User.user_type,User.name,User.courses,tokenPubKey=namedTokKey)
+        new_named_cred.sign(RSA.import_key(private_key))
+
+        User.anon_cred_id = new_anon_cred.uuid
+        User.named_cred_id = new_named_cred.uuid
+        acc.addCredentials([User.anon_cred_id,User.named_cred_id])
+
+        return [CredentialEncoder().encode(new_anon_cred),CredentialEncoder().encode(new_named_cred)]
 
 @ns.route('/addCourses')
 class AddCourse(Resource):
@@ -104,9 +140,9 @@ class AddCourse(Resource):
 
         #create new credentials
         #TODO: use uuid64 to generate cred ids
-        new_anon_cred_id = randint(0,10000)
+        new_anon_cred_id = uuid.uuid4().int
         new_anon_cred = AnonymousCredential(new_anon_cred_id,User.user_type,final_courses)
-        new_named_cred_id = randint(0,10000)
+        new_named_cred_id = uuid.uuid4().int
         new_named_cred = NamedCredential(new_named_cred_id,User.user_type,User.name,final_courses)
 
         #sign credentials

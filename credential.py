@@ -12,11 +12,12 @@ import json
 
 class Credential:
 
-    def __init__(self, id, user_type,courses,signature):
+    def __init__(self, id, user_type,courses,signature,tokenPubKey):
         self.uuid = id
         self.user_type = user_type
         self.courses = courses
         self.signature = signature
+        self.tokenPubKey = tokenPubKey
 
     def sign(self,msg, private_key):
         signer = pkcs1_15.new(private_key)
@@ -39,32 +40,31 @@ class Credential:
 
         print("Check value for signature verification",success)
         return success
-        return
 
 class NamedCredential(Credential):
-    def __init__(self,uuid,user_type,name,courses,signature=""):
-        super(NamedCredential,self).__init__(uuid,user_type,courses,signature)
+    def __init__(self,uuid,user_type,name,courses,signature="",tokenPubKey = ""):
+        super(NamedCredential,self).__init__(uuid,user_type,courses,signature,tokenPubKey)
         self.name = name
 
     def sign(self,private_key):
-        msg = (str(self.uuid) + self.name + self.user_type + ''.join(self.courses)).encode()
+        msg = (str(self.uuid) + self.name + self.user_type + self.tokenPubKey + ''.join(self.courses)).encode()
         super(NamedCredential,self).sign(msg,private_key)
 
     def verify(self,public_key):
-        msg = (str(self.uuid) + self.name + self.user_type + ''.join(self.courses)).encode()
+        msg = (str(self.uuid) + self.name + self.user_type + self.tokenPubKey + ''.join(self.courses)).encode()
         return super(NamedCredential,self).verify(msg,public_key) 
 
 class AnonymousCredential(Credential):
 
-    def __init__(self,uuid,user_type,courses,signature=""):
-        super(AnonymousCredential,self).__init__(uuid,user_type,courses,signature)
+    def __init__(self,uuid,user_type,courses,signature="",tokenPubKey = ""):
+        super(AnonymousCredential,self).__init__(uuid,user_type,courses,signature,tokenPubKey)
 
     def sign(self,private_key):
-        msg = (str(self.uuid) + self.user_type + ''.join(self.courses)).encode()
+        msg = (str(self.uuid) + self.user_type + self.tokenPubKey + ''.join(self.courses)).encode()
         super(AnonymousCredential,self).sign(msg,private_key)
 
     def verify(self,public_key):
-        msg = (str(self.uuid) + self.user_type + ''.join(self.courses)).encode()
+        msg = (str(self.uuid) + self.user_type + self.tokenPubKey + ''.join(self.courses)).encode()
         return super(AnonymousCredential,self).verify(msg,public_key)
 
 class CredentialEncoder(JSONEncoder):
