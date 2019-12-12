@@ -9,11 +9,10 @@ from user_obj import UserObject
 import json
 import ast
 
-#issuer key generation
-#TODO: Check if key is available in current working dir, an import
+#issuer key laoding
 key = RSA.generate(2048)
-private_key = key
-public_key = key.publickey()
+private_key = RSA.import_key(open("private.pem").read()).exportKey()
+public_key = recipient_key = RSA.import_key(open("receiver.pem").read()).exportKey()
 
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app)
@@ -24,8 +23,7 @@ api = Api(app, version='1.0', title='AnonCred API',
 ns = api.namespace('iss_opps', description='Issuer operations')
 course_enr = api.model('Course_Enr', {
     'netid': fields.String(required=True, description='NetId'),
-    'course1': fields.String(description='Course to be added/removed'),
-    'course2': fields.String(description='Course to be added/removed')
+    'courses':fields.List(fields.String)
 })
 
 
@@ -71,9 +69,9 @@ class getPubKey(Resource):
     def get(self):
         #print(public_key.export_key())
         #return "hi"
-        return public_key.exportKey().decode("utf-8")
+        return public_key.decode("utf-8")
 
-#TODO: Add API to get credential 
+#TODO: Add API to get credential
 
 @ns.route('/addCourses')
 class AddCourse(Resource):
@@ -84,15 +82,14 @@ class AddCourse(Resource):
         input : netId, list of courses to add
         Will return a list of signed credential objects
         """
-    
+
         data = ast.literal_eval(request.data.decode('utf-8'))
         user_netid = data['netid']
         new_courses = []
-        #TODO: Add only unique entries in courses
-        if data['course1'] is not None:
-            new_courses.append(data['course1'])
-        if data['course2'] is not None:
-            new_courses.append(data['course2'])
+
+        for course in data['courses']:
+            new_courses.append(course)
+
 
         User = registered_users[user_netid]
         prev_courses = User.courses
@@ -113,8 +110,8 @@ class AddCourse(Resource):
         new_named_cred = NamedCredential(new_named_cred_id,User.user_type,User.name,final_courses)
 
         #sign credentials
-        new_anon_cred.sign(private_key)
-        new_named_cred.sign(private_key)
+        new_anon_cred.sign(RSA.import_key(private_key))
+        new_named_cred.sign(RSA.import_key(private_key))
 
         #add new creds to accumulator
         new_cred_list=[]
@@ -156,12 +153,9 @@ class DropCourses(Resource):
         prev_courses = User.courses
         final_courses = prev_courses
         #print(final_courses)
-        if data['course1'] is not None:
-            final_courses.remove(data['course1'])
-        if data['course2'] is not None:
-            final_courses.remove(data['course2'])
 
-
+        for course in data['courses']:
+            final_courses.remove(course)
 
         #delete prev cred from accumulator
         prev_cred_list = []
@@ -176,8 +170,8 @@ class DropCourses(Resource):
         new_named_cred = NamedCredential(new_named_cred_id,User.user_type,User.name,final_courses)
 
         #sign credentials
-        new_anon_cred.sign(private_key)
-        new_named_cred.sign(private_key)
+        new_anon_cred.sign(RSA.import_key(private_key))
+        new_named_cred.sign(RSA.import_key(private_key))
 
         #add new creds to accumulator
         new_cred_list=[]

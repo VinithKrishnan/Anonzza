@@ -6,7 +6,7 @@ from credential import CredentialDecoder,CredentialEncoder
 
 ISSUER_API_ROOT = "/"
 
-req = requests.post("http://127.0.0.1:6060/iss_opps/addCourses",data = json.dumps({'netid':'vinithk2','course1':'c1','course2':'c2'}))
+req = requests.post("http://127.0.0.1:6060/iss_opps/addCourses",data = json.dumps({'netid':'vinithk2','courses':["cs432","cs433"]}))
 
 credList = json.loads(req.json())
 
@@ -29,5 +29,6 @@ proof = prove_membership(a0, s, named_cred.uuid, n)
 nonce = s[named_cred.uuid]
 print(proof)
 
-req1 = requests.post("http://127.0.0.1:5000/ver_opps/currentAccumulator",data = json.dumps({'content':'Test post','credential':named_cred,'proof':proof,'nonce':nonce},cls=CredentialEncoder))
-
+req1 = requests.post("http://127.0.0.1:5000/ver_opps/currentAccumulator",data = json.dumps({'content':'Test post','course':"cs432",'credential':named_cred,'proof':proof,'nonce':nonce},cls=CredentialEncoder))
+req2 = requests.post("http://127.0.0.1:5000/ver_opps/class/cs432/addPost",data = json.dumps({'content':'Hi cs432','course':"cs432",'credential':named_cred,'proof':proof,'nonce':nonce},cls=CredentialEncoder))
+req1 = requests.post("http://127.0.0.1:5000/ver_opps/class/cs432/readPosts",data = json.dumps({'content':'','course':"cs432",'credential':named_cred,'proof':proof,'nonce':nonce},cls=CredentialEncoder))

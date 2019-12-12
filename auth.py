@@ -31,6 +31,7 @@ def login_required(f):
     def wrapper(*args, **kwargs):
         req = json.loads(request.data.decode("utf-8"))
         content = req['content']
+        course = req['course']
         proof = req['proof']
         cred = req['credential']
         nonce = req['nonce']
@@ -55,7 +56,12 @@ def login_required(f):
             print("Credential not in Acc")
             return
 
-        #TODO: we also need to check if the user has access to the correct class
+        
+        if course in decoded_cred.courses:
+            print("Course present in cred")
+        else:
+            print("Course not in cred")
+            return
 
         #Extract the proof portion and run it through the verifier
 
