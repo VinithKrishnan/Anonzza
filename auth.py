@@ -31,7 +31,7 @@ def get_private_acc_data():
 
 
 
-def check_request(req):
+def check_request(req,challenge):
     proof = req['proof']
     cred = req['credential']
     nonce = req['nonce']
@@ -57,6 +57,22 @@ def check_request(req):
         return (False, None)
 
     #TODO: Check if the challenge is the correct value
+    challengeResponse = req['challengeResponse']
+    prover_pubkey = cred.tokenPubKey
+
+    verifier = pkcs1_15.new(prover_pubkey)
+    h = SHA384.new(challenge)
+    success = False
+
+    try:
+        verifier.verify(h,bytes.fromhex(challengeResponse))
+        print("The signature is valid.")
+        success = True
+    except ValueError:
+        print ("The signature is not valid.")
+        success = False
+
+
 
     name = None
     if isinstance(cred,NamedCredential):
@@ -64,4 +80,4 @@ def check_request(req):
     elif isinstance(cred,AnonymousCredential):
         name = User("Anonymous",cred.user_type,cred.courses)
 
-    return (True, name)
+    return (success, name)

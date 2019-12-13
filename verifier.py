@@ -5,7 +5,7 @@ from accumulator import Accumulator,AccumulatorEncoder
 from Crypto.PublicKey import RSA
 from Crypto.Random.random import randint
 from credential import AnonymousCredential,NamedCredential,CredentialEncoder
-from user_obj import UserObject
+from user_obj import UserObject,User
 import json, uuid, secrets
 from auth import check_request
 import ast,os
@@ -33,14 +33,16 @@ class_posts = {}
 
 def login_required(f):
     def wrapper(*args, **kwargs):
+
         #Extract the proof portion and run it through the verifier
         if session['user'] is None:
             abort(403)
         else:
             #Add course check here
+            
             user = session['user']
-            
-            
+
+
         return f(*args, **kwargs)
     wrapper.__doc__ = f.__doc__
     wrapper.__name__ = f.__name__
@@ -56,7 +58,7 @@ named_cred = api.model('NamedCred',{
 
 request_body = api.model('RequestBody',{
     'content':fields.String,
-    
+
 })
 
 login_msg = api.model('LoginBody',{
@@ -89,6 +91,9 @@ class ReadPosts(Resource):
             print(class_posts[courseid])
 
 
+
+
+
 @ns.route('/login')
 class LoginHandler(Resource):
     def get(self):
@@ -98,7 +103,7 @@ class LoginHandler(Resource):
     @ns.expect(login_msg)
     def post(self):
         req = request.json
-        success, user = check_request(req)
+        success, user = check_request(req,session['challenge'])
         if success:
             session['user'] = user
             return
