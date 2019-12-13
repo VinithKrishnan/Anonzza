@@ -24,3 +24,19 @@ The prover currently tests basic functionality ie fetches credentials from the i
 
 
 API documentation is available via Swagger, can be accessed at / for each service.
+
+
+
+References:
+
+*  Camenisch, J. &. (2002, August). Dynamic accumulators and application to efficient revocation of anonymous credentials. Annual International Cryptology Conference (pp. 61-76). Berlin, Heidelberg: Springer. 
+
+*  Delignat-Lavaud, A. F. (2016, May). Cinderella: Turning shabby X. 509 certificates into elegant anonymous credentials with the magic of verifiable computation. 2016 IEEE Symposium on Security and Privacy (SP) (pp. 235-254). IEEE. 
+
+*  Paquin, C. (2013). U-Prove Technology Overview V1.1 (Revision 2). Microsoft. 
+
+*  Schanzenbach, M. K. (2019). ZKlaims: Privacy-preserving Attribute-based Credentials using Non-interactive Zero-knowledge Techniques. arXiv preprint. arXiv. 
+
+*  RSA-Accumulator implementation sourced from - https://github.com/oleiba/RSA-accumulator
+
+
