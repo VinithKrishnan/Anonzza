@@ -7,3 +7,4 @@ vir/*
 *.pyc
 flask_session/*
 *.pem
+*venv*

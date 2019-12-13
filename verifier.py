@@ -21,9 +21,6 @@ sess = Session()
 app.config['SESSION_TYPE'] = 'filesystem'
 sess.init_app(app)
 
-
-
-
 ns = api.namespace('ver_opps', description='Verifier operations')
 
 Users = {}
@@ -73,9 +70,9 @@ class AddPost(Resource):
     def post(self,courseid):
         data = ast.literal_eval(request.data.decode('utf-8'))
         if len(class_posts) == 0:
-            class_posts[courseid] = [(data['content'],session['user'].name)]
+            class_posts[courseid] = [{'content' : data['content'],'author' : session['user'].name}]
         else:
-            class_posts[courseid].append((data['content'],session['user'].name))
+            class_posts[courseid].append({'content' : data['content'],'author' : session['user'].name})
 
 
 @ns.route('/class/<string:courseid>/readPosts')

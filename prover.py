@@ -6,79 +6,71 @@ from credential import CredentialDecoder,CredentialEncoder
 from Crypto.PublicKey import RSA
 from Crypto.Signature import pkcs1_15
 from Crypto.Hash import SHA384
+from prover_helper import do_verifier_login,add_post,get_posts
 
 ISSUER_API_ROOT = "/"
 
-#Get credentials from the issuer
-#Setup 2 keys for receiving 2 tokens from the receiver
-anonTokenKeyPair = RSA.generate(2048)
-anonTokenPrivKey = anonTokenKeyPair.exportKey()
-anonTokenPubKey = recipient_key = anonTokenKeyPair.publickey().exportKey()
+cred_store = {'named_cred' : None, 'anon_cred' : None}
+tokenPrivKeys = {'named_cred' : None, 'anon_cred' : None}
+session_store = {'named_cred' : None, 'anon_cred' : None}
 
-namedTokenKeyPair = RSA.generate(2048)
-namedTokenPrivKey = namedTokenKeyPair.exportKey()
-namedTokenPubKey = recipient_key = namedTokenKeyPair.publickey().exportKey()
+def init_setup():
+    #Get credentials from the issuer
+    #Setup 2 keys for receiving 2 tokens from the receiver
+    anonTokenKeyPair = RSA.generate(2048)
+    anonTokenPrivKey = anonTokenKeyPair.exportKey()
+    anonTokenPubKey = recipient_key = anonTokenKeyPair.publickey().exportKey()
 
-req = requests.post("http://127.0.0.1:6060/iss_opps/getCred/vinithk2",json = {'namedKey':namedTokenPubKey.hex(),'anonKey':anonTokenPubKey.hex()})
+    namedTokenKeyPair = RSA.generate(2048)
+    namedTokenPrivKey = namedTokenKeyPair.exportKey()
+    namedTokenPubKey = recipient_key = namedTokenKeyPair.publickey().exportKey()
 
-credList = req.json()
+    req = requests.post("http://127.0.0.1:6060/iss_opps/getCred/vinithk2",json = {'namedKey':namedTokenPubKey.hex(),'anonKey':anonTokenPubKey.hex()})
 
-anon_cred = json.loads(credList[0],cls=CredentialDecoder)
-named_cred = json.loads(credList[1],cls=CredentialDecoder)
+    credList = req.json()
 
-acc = get_accumulator_value()
+    cred_store['anon_cred'] = json.loads(credList[0],cls=CredentialDecoder)
+    cred_store['named_cred'] = json.loads(credList[1],cls=CredentialDecoder)
 
-private_acc = get_private_acc_data()
+    tokenPrivKeys['anon_cred'] = anonTokenPrivKey
+    tokenPrivKeys['named_cred'] = namedTokenPrivKey
 
-n = private_acc['n']
-s = private_acc['set']
-s =  {int(k):int(v) for k,v in s.items()}
-a0 = private_acc['a0']
+def establish_session(cred_type):
 
-print(n,s,a0)
+    credential = cred_store[cred_type]
+    #First get accumulator data from issuer
+    acc = get_accumulator_value()
+    private_acc = get_private_acc_data()
 
-proof = prove_membership(a0, s, anon_cred.uuid, n)
-nonce = s[anon_cred.uuid]
-print(proof)
+    n = private_acc['n']
+    s = private_acc['set']
+    s =  {int(k):int(v) for k,v in s.items()}
+    a0 = private_acc['a0']
 
-print("Acc values",a0,s,n,acc)
+    #Create a proof of membership
+    proof = prove_membership(a0, s, credential.uuid, n)
+    nonce = s[credential.uuid]
 
+    session = do_verifier_login(credential,proof,nonce,tokenPrivKeys[cred_type])
+    session_store[cred_type] = session
+    return session
 
+init_setup()
 
-anon_session = requests.Session()
+#Setup sessions with named & anonymous tokens
+anon_session = establish_session('anon_cred')
 
-req1 = anon_session.get("http://127.0.0.1:5000/ver_opps/login")
-challenge = bytes.fromhex(req1.json())
-signer = pkcs1_15.new(RSA.import_key(anonTokenPrivKey))
-h = SHA384.new(challenge)
-challengeResponse = signer.sign(h).hex()
+named_session = establish_session('named_cred')
 
+#Create a new post with the anonymous token
+add_post(session_store['anon_cred'],"CS432", "This is an anon post")
 
-req2 = anon_session.post("http://127.0.0.1:5000/ver_opps/login",data=json.dumps({'credential':anon_cred,'proof':proof,'nonce':nonce,'challengeResponse':challengeResponse},cls=CredentialEncoder),headers={'content-type':'application/json'})
-print(req2.json())
+#Get current posts
+print(get_posts(session_store['anon_cred'],"CS432"))
 
-req3 = anon_session.post("http://127.0.0.1:5000/ver_opps/class/CS432/addPost",json = {'content':"This is an anon post!"})
-print(req3.json())
+#Create a new post with the named token
+add_post(session_store['named_cred'],"CS432", "This is a verified post")
 
-req4 = anon_session.get("http://127.0.0.1:5000/ver_opps/class/CS432/readPosts")
-print(req4.json())
-
-regular_session = requests.Session()
-
-req1 = regular_session.get("http://127.0.0.1:5000/ver_opps/login")
-challenge = bytes.fromhex(req1.json())
-signer = pkcs1_15.new(RSA.import_key(namedTokenPrivKey))
-h = SHA384.new(challenge)
-challengeResponse = signer.sign(h).hex()
-proof = prove_membership(a0, s, named_cred.uuid, n)
-nonce = s[named_cred.uuid]
-
-req2 = regular_session.post("http://127.0.0.1:5000/ver_opps/login",data=json.dumps({'credential':named_cred,'proof':proof,'nonce':nonce,'challengeResponse':challengeResponse},cls=CredentialEncoder),headers={'content-type':'application/json'})
-print(req2.json())
-
-req3 = regular_session.post("http://127.0.0.1:5000/ver_opps/class/CS432/addPost",json = {'content':"This is a regular post!"})
-print(req3.json())
-
-req4 = regular_session.get("http://127.0.0.1:5000/ver_opps/class/CS432/readPosts")
-print(req4.json())
+#Get current posts
+print(get_posts(session_store['anon_cred'],"CS432"))
 
