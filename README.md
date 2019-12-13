@@ -1,6 +1,6 @@
 # anon-cred
 
-Making Piazza private using pseudonymous credentials
+Selectively Revealing Bulletin Board Using Pseudonymous Credentials
 
 CS498AM Fall 2019 course project
 
