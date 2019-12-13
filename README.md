@@ -1,18 +1,16 @@
-# anon-cred
+## Selectively Identity Revealing Bulletin Board Using Pseudonymous Credentials
 
-Selectively Identity Revealing Bulletin Board Using Pseudonymous Credentials
-
-CS498AM Fall 2019 course project
+### CS498AM Fall 2019 course project
 
 
-Setting up the project 
+## Setting up the project 
 
 Clone the repo using - `git clone --recurse-submodules https://gitlab.engr.illinois.edu/anantk3/anon-cred.git`
 
 Install the dependencies - `pip install -r requirements.txt`
 
 
-Running the code base
+## Running the code base
 
 The issuer code lies in issuer.py, the issuer service can be started up at port 6060 by running `python issuer.py`
 
@@ -27,7 +25,7 @@ API documentation is available via Swagger, can be accessed at / for each servic
 
 
 
-References:
+## References:
 
 *  Camenisch, J. &. (2002, August). Dynamic accumulators and application to efficient revocation of anonymous credentials. Annual International Cryptology Conference (pp. 61-76). Berlin, Heidelberg: Springer. 
 
