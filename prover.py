@@ -27,6 +27,8 @@ anon_cred = json.loads(credList[0],cls=CredentialDecoder)
 named_cred = json.loads(credList[1],cls=CredentialDecoder)
 
 print(anon_cred.signature)
+
+
 acc = get_accumulator_value()
 
 private_acc = get_private_acc_data()
@@ -57,8 +59,3 @@ challengeResponse = signer.sign(h).hex()
 
 req2 = s.post("http://127.0.0.1:5000/ver_opps/login",data=json.dumps({'credential':anon_cred,'proof':proof,'nonce':nonce,'challengeResponse':challengeResponse},cls=CredentialEncoder),headers={'content-type':'application/json'})
 print(req2.json())
-
-
-#req1 = requests.post("http://127.0.0.1:5000/ver_opps/currentAccumulator",data = json.dumps({'course':"cs432"},cls=CredentialEncoder))
-#req2 = requests.post("http://127.0.0.1:5000/ver_opps/class/cs432/addPost",data = json.dumps({'content':'Hi cs432','course':"cs432",'credential':named_cred,'proof':proof,'nonce':nonce},cls=CredentialEncoder))
-#req1 = requests.post("http://127.0.0.1:5000/ver_opps/class/cs432/readPosts",data = json.dumps({'content':'','course':"cs432",'credential':named_cred,'proof':proof,'nonce':nonce},cls=CredentialEncoder))

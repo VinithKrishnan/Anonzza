@@ -6,3 +6,4 @@ vir
 vir/*
 *.pyc
 flask_session/*
+*.pem
