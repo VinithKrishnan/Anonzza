@@ -58,30 +58,35 @@ acc.addCredentials([123,456])
 
 @ns.route('/currentAccumulator')
 class CurrentAccumulator(Resource):
+    @ns.doc('Used to fetch current value of accumulator, publicly accessible')
     def get(self):
         t = acc.getCurrentValue()
         return json.dumps(t)
 
 @ns.route('/currentNonce')
 class CurrentNonce(Resource):
+    @ns.doc('Used to fetch prime hash value for element')
     def get(self):
         t = acc.getNonce()
         return json.dumps(t)
 
 @ns.route('/Nvalue')
 class CurrentNonce(Resource):
+    @ns.doc('Used to fetch value of n for the accumulator (Should be consolidated with the currentAccumulator API later)')
     def get(self):
         t = acc.n
         return json.dumps(t)
 
 @ns.route('/accumulatorPrivate')
 class PrivateAcc(Resource):
+    @ns.doc('Used to fetch restricted values of accumulator, can be accessed only by provers')
     def get(self):
         private_acc  = {'set':acc.set,'a0':acc.initial_acc,'n':acc.n}
         return json.dumps(private_acc)
 
 @ns.route('/PubKey')
 class getPubKey(Resource):
+    @ns.doc('PubKey is used to get the public key of the issuer (Will be replaced by a keyring later)')
     def get(self):
         #print(public_key.export_key())
         #return "hi"
@@ -89,7 +94,7 @@ class getPubKey(Resource):
 
 @ns.route('/getCred/<string:netid>')
 class GetCredential(Resource):
-    @ns.doc('get_credential')
+    @ns.doc('Get credential is used to refresh current credentials for user')
     @ns.expect(token_keys)
     def post(self,netid):
         print(request.json)
@@ -115,7 +120,7 @@ class GetCredential(Resource):
 
 @ns.route('/addCourses')
 class AddCourse(Resource):
-    @ns.doc('add_course')
+    @ns.doc('Add course is used to enrol user into new courses')
     @ns.expect(course_enr)
     def post(self):
         """TODO: Add logic to add course and update accumulator values
@@ -175,7 +180,7 @@ class AddCourse(Resource):
 
 @ns.route('/dropCourses')
 class DropCourses(Resource):
-    @ns.doc('drop_courses')
+    @ns.doc('Drop Courses is used to drop user from registered courses')
     @ns.expect(course_enr)
     def post(self):
         """TODO: Add logic to add course and update accumulator values
