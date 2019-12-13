@@ -76,9 +76,10 @@ def check_request(req,challenge):
         success = False
 
     user = None
-    if isinstance(cred,NamedCredential):
-        user = User(cred.name,cred.user_type,cred.courses)
-    elif isinstance(cred,AnonymousCredential):
-        user = User("Anonymous",cred.user_type,cred.courses)
-
+    print(type(decoded_cred))
+    if isinstance(decoded_cred,NamedCredential):
+        user = User(decoded_cred.name,decoded_cred.user_type,decoded_cred.courses)
+    elif isinstance(decoded_cred,AnonymousCredential):
+        user = User("Anonymous",decoded_cred.user_type,decoded_cred.courses)
+    print("User", user)
     return (success, user)

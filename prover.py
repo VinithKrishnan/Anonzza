@@ -45,14 +45,41 @@ print("Acc values",a0,s,n,acc)
 
 
 
-s = requests.Session()
+anon_session = requests.Session()
 
-req1 = s.get("http://127.0.0.1:5000/ver_opps/login")
+req1 = anon_session.get("http://127.0.0.1:5000/ver_opps/login")
 challenge = bytes.fromhex(req1.json())
 signer = pkcs1_15.new(RSA.import_key(anonTokenPrivKey))
 h = SHA384.new(challenge)
 challengeResponse = signer.sign(h).hex()
 
 
-req2 = s.post("http://127.0.0.1:5000/ver_opps/login",data=json.dumps({'credential':anon_cred,'proof':proof,'nonce':nonce,'challengeResponse':challengeResponse},cls=CredentialEncoder),headers={'content-type':'application/json'})
+req2 = anon_session.post("http://127.0.0.1:5000/ver_opps/login",data=json.dumps({'credential':anon_cred,'proof':proof,'nonce':nonce,'challengeResponse':challengeResponse},cls=CredentialEncoder),headers={'content-type':'application/json'})
 print(req2.json())
+
+req3 = anon_session.post("http://127.0.0.1:5000/ver_opps/class/CS432/addPost",json = {'content':"This is an anon post!"})
+print(req3.json())
+
+req4 = anon_session.get("http://127.0.0.1:5000/ver_opps/class/CS432/readPosts")
+print(req4.json())
+
+
+regular_session = requests.Session()
+
+req1 = regular_session.get("http://127.0.0.1:5000/ver_opps/login")
+challenge = bytes.fromhex(req1.json())
+signer = pkcs1_15.new(RSA.import_key(namedTokenPrivKey))
+h = SHA384.new(challenge)
+challengeResponse = signer.sign(h).hex()
+proof = prove_membership(a0, s, named_cred.uuid, n)
+nonce = s[named_cred.uuid]
+
+req2 = regular_session.post("http://127.0.0.1:5000/ver_opps/login",data=json.dumps({'credential':named_cred,'proof':proof,'nonce':nonce,'challengeResponse':challengeResponse},cls=CredentialEncoder),headers={'content-type':'application/json'})
+print(req2.json())
+
+req3 = regular_session.post("http://127.0.0.1:5000/ver_opps/class/CS432/addPost",json = {'content':"This is a regular post!"})
+print(req3.json())
+
+req4 = regular_session.get("http://127.0.0.1:5000/ver_opps/class/CS432/readPosts")
+print(req4.json())
+

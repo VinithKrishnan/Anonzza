@@ -34,15 +34,14 @@ class_posts = {}
 
 def login_required(f):
     def wrapper(*args, **kwargs):
-
         #Extract the proof portion and run it through the verifier
         if session['user'] is None:
             abort(403)
         else:
             #Add course check here
-            
             user = session['user']
-
+            if request.view_args["courseid"] not in user.courses:
+                abort(403)
 
         return f(*args, **kwargs)
     wrapper.__doc__ = f.__doc__
@@ -76,24 +75,17 @@ class AddPost(Resource):
     def post(self,courseid):
         data = ast.literal_eval(request.data.decode('utf-8'))
         if len(class_posts) == 0:
-            class_posts[courseid] = [data['content']]
+            class_posts[courseid] = [(data['content'],session['user'].name)]
         else:
-            class_posts[courseid].append(data['content'])
+            class_posts[courseid].append((data['content'],session['user'].name))
 
 
 @ns.route('/class/<string:courseid>/readPosts')
 class ReadPosts(Resource):
     method_decorators = [login_required]
     @ns.expect(request_body)
-    def post(self,courseid):
-        if len(class_posts)==0 :
-            print("No posts yet!")
-        else:
-            print(class_posts[courseid])
-
-
-
-
+    def get(self,courseid):
+        return class_posts[courseid]
 
 @ns.route('/login')
 class LoginHandler(Resource):
