@@ -63,7 +63,6 @@ print(req3.json())
 req4 = anon_session.get("http://127.0.0.1:5000/ver_opps/class/CS432/readPosts")
 print(req4.json())
 
-
 regular_session = requests.Session()
 
 req1 = regular_session.get("http://127.0.0.1:5000/ver_opps/login")

@@ -1,4 +1,3 @@
-from flask_login import UserMixin
 
 class UserObject:
     def __init__(self,name,user_type,courses,anon_cred_id,named_cred_id):
