@@ -52,6 +52,10 @@ acc = Accumulator()
 
 registered_users = {}
 
+temp_user = UserObject("vin","student",["CS432","CS534"],123,456)
+registered_users["vinithk2"]=temp_user
+acc.addCredentials([123,456])
+
 @ns.route('/currentAccumulator')
 class CurrentAccumulator(Resource):
     def get(self):
@@ -167,10 +171,6 @@ class AddCourse(Resource):
         cred_list.append(CredentialEncoder().encode(new_named_cred))
 
         return json.dumps(cred_list)
-
-temp_user = UserObject("vin","student",["CS432","CS534"],123,456)
-registered_users["vinithk2"]=temp_user
-acc.addCredentials([123,456])
 
 
 @ns.route('/dropCourses')

@@ -4,6 +4,8 @@ from rsa_accumulator.main import prove_membership
 import json
 from credential import CredentialDecoder,CredentialEncoder
 from Crypto.PublicKey import RSA
+from Crypto.Signature import pkcs1_15
+from Crypto.Hash import SHA384
 
 ISSUER_API_ROOT = "/"
 
@@ -36,10 +38,27 @@ a0 = private_acc['a0']
 
 print(n,s,a0)
 
-proof = prove_membership(a0, s, named_cred.uuid, n)
+proof = prove_membership(a0, s, anon_cred.uuid, n)
 nonce = s[named_cred.uuid]
 print(proof)
 
-req1 = requests.post("http://127.0.0.1:5000/ver_opps/currentAccumulator",data = json.dumps({'content':'Test post','course':"cs432",'credential':named_cred,'proof':proof,'nonce':nonce},cls=CredentialEncoder))
-req2 = requests.post("http://127.0.0.1:5000/ver_opps/class/cs432/addPost",data = json.dumps({'content':'Hi cs432','course':"cs432",'credential':named_cred,'proof':proof,'nonce':nonce},cls=CredentialEncoder))
-req1 = requests.post("http://127.0.0.1:5000/ver_opps/class/cs432/readPosts",data = json.dumps({'content':'','course':"cs432",'credential':named_cred,'proof':proof,'nonce':nonce},cls=CredentialEncoder))
+print("Acc values",a0,s,n,acc)
+
+
+
+s = requests.Session()
+
+req1 = s.get("http://127.0.0.1:5000/ver_opps/login")
+challenge = bytes.fromhex(req1.json())
+print(challenge)
+signer = pkcs1_15.new(RSA.import_key(anonTokenPrivKey))
+h = SHA384.new(challenge)
+challengeResponse = signer.sign(h).hex()
+
+req2 = s.post("http://127.0.0.1:5000/ver_opps/login",data=json.dumps({'credential':anon_cred,'proof':proof,'nonce':nonce,'challengeResponse':challengeResponse},cls=CredentialEncoder),headers={'content-type':'application/json'})
+print(req2.json())
+
+
+#req1 = requests.post("http://127.0.0.1:5000/ver_opps/currentAccumulator",data = json.dumps({'course':"cs432"},cls=CredentialEncoder))
+#req2 = requests.post("http://127.0.0.1:5000/ver_opps/class/cs432/addPost",data = json.dumps({'content':'Hi cs432','course':"cs432",'credential':named_cred,'proof':proof,'nonce':nonce},cls=CredentialEncoder))
+#req1 = requests.post("http://127.0.0.1:5000/ver_opps/class/cs432/readPosts",data = json.dumps({'content':'','course':"cs432",'credential':named_cred,'proof':proof,'nonce':nonce},cls=CredentialEncoder))
