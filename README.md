@@ -18,7 +18,7 @@ The verifier can be started up at port 5000 by running `python verifier.py`
 
 The prover code can be run using `python prover.py`
 
-The prover currently tests basic functionality ie fetches credentials from the issuer, and makes an anonymous and a post with the user's identity linked to it.
+The prover currently tests basic functionality ie fetches credentials for a sample user from the issuer, and makes an anonymous and a post with the user's identity linked to it.
 
 
 API documentation is available via Swagger, can be accessed at / for each service.
