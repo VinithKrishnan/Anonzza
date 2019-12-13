@@ -50,7 +50,7 @@ named_cred = api.model('NamedCred',{
     'courses':fields.List(fields.String),
     'signature':fields.Raw
 })
-restricted values of accumulator, can be accessed only by proversrestricted values of accumulator, can be accessed only by provers
+
 request_body = api.model('RequestBody',{
     'content':fields.String,
 
@@ -69,6 +69,9 @@ class AddPost(Resource):
     method_decorators = [login_required]
     @ns.expect(request_body)
     def post(self,courseid):
+        """
+        Used to create a new post on the bulletin board
+        """
         data = ast.literal_eval(request.data.decode('utf-8'))
         if len(class_posts) == 0:
             class_posts[courseid] = [{'content' : data['content'],'author' : session['user'].name}]
@@ -79,20 +82,22 @@ class AddPost(Resource):
 @ns.route('/class/<string:courseid>/readPosts')
 class ReadPosts(Resource):
     method_decorators = [login_required]
-    @ns.expect(request_body)
     def get(self,courseid):
+        """Used to read current posts on the  bulletin board"""
         return class_posts[courseid]
 
 @ns.route('/login')
 class LoginHandler(Resource):
     @ns.doc("Used to initiate login process and obtain a challenge")
     def get(self):
+        """Used to initiate login process and obtain a challenge"""
         challenge = uuid.uuid4()
         session['challenge'] = challenge.hex
         return challenge.hex
     @ns.doc("Used to complete login process by submitting challenge response and proofs")
     @ns.expect(login_msg)
     def post(self):
+        """Used to complete login process by submitting challenge response and proofs"""
         req = request.json
         success, user = check_request(req,session['challenge'])
         if success:
@@ -102,5 +107,4 @@ class LoginHandler(Resource):
             abort(403)
 
 if __name__ == '__main__':
-    #trusted setup
     app.run(debug=True)

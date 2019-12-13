@@ -60,6 +60,9 @@ acc.addCredentials([123,456])
 class CurrentAccumulator(Resource):
     @ns.doc('Used to fetch current value of accumulator, publicly accessible')
     def get(self):
+        """
+        Used to fetch current value of accumulator, publicly accessible
+        """
         t = acc.getCurrentValue()
         return json.dumps(t)
 
@@ -67,6 +70,9 @@ class CurrentAccumulator(Resource):
 class CurrentNonce(Resource):
     @ns.doc('Used to fetch prime hash value for element')
     def get(self):
+        """
+        Used to fetch prime hash value for element
+        """
         t = acc.getNonce()
         return json.dumps(t)
 
@@ -74,6 +80,9 @@ class CurrentNonce(Resource):
 class CurrentNonce(Resource):
     @ns.doc('Used to fetch value of n for the accumulator (Should be consolidated with the currentAccumulator API later)')
     def get(self):
+        """
+        Used to fetch value of n for the accumulator (Should be consolidated with the currentAccumulator API later)
+        """
         t = acc.n
         return json.dumps(t)
 
@@ -81,6 +90,9 @@ class CurrentNonce(Resource):
 class PrivateAcc(Resource):
     @ns.doc('Used to fetch restricted values of accumulator, can be accessed only by provers')
     def get(self):
+        """
+        Used to fetch restricted values of accumulator, can be accessed only by provers
+        """
         private_acc  = {'set':acc.set,'a0':acc.initial_acc,'n':acc.n}
         return json.dumps(private_acc)
 
@@ -88,6 +100,8 @@ class PrivateAcc(Resource):
 class getPubKey(Resource):
     @ns.doc('PubKey is used to get the public key of the issuer (Will be replaced by a keyring later)')
     def get(self):
+        """'PubKey is used to get the public key of the issuer (Will be replaced by a keyring later)'
+        """
         #print(public_key.export_key())
         #return "hi"
         return public_key.decode("utf-8")
@@ -97,6 +111,9 @@ class GetCredential(Resource):
     @ns.doc('Get credential is used to refresh current credentials for user')
     @ns.expect(token_keys)
     def post(self,netid):
+        """Get credential is used to refresh current credentials for user
+
+        """
         print(request.json)
     #Here we pass a list of public keys as the input, and we get assigned 2 signed credentials
         anonTokKey = request.json['anonKey']
@@ -123,7 +140,7 @@ class AddCourse(Resource):
     @ns.doc('Add course is used to enrol user into new courses')
     @ns.expect(course_enr)
     def post(self):
-        """TODO: Add logic to add course and update accumulator values
+        """
         input : netId, list of courses to add
         Will return a list of signed credential objects
         """
@@ -183,9 +200,7 @@ class DropCourses(Resource):
     @ns.doc('Drop Courses is used to drop user from registered courses')
     @ns.expect(course_enr)
     def post(self):
-        """TODO: Add logic to add course and update accumulator values
-        Will return a list of signed credential objects
-        input : netId, list of courses to drop
+        """Drop Courses is used to drop user from registered courses
         """
         data = api.payload
         user_netid = data['netid']
