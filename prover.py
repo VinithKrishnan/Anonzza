@@ -26,9 +26,6 @@ credList = req.json()
 anon_cred = json.loads(credList[0],cls=CredentialDecoder)
 named_cred = json.loads(credList[1],cls=CredentialDecoder)
 
-print(anon_cred.signature)
-
-
 acc = get_accumulator_value()
 
 private_acc = get_private_acc_data()
@@ -41,7 +38,7 @@ a0 = private_acc['a0']
 print(n,s,a0)
 
 proof = prove_membership(a0, s, anon_cred.uuid, n)
-nonce = s[named_cred.uuid]
+nonce = s[anon_cred.uuid]
 print(proof)
 
 print("Acc values",a0,s,n,acc)
@@ -52,7 +49,6 @@ s = requests.Session()
 
 req1 = s.get("http://127.0.0.1:5000/ver_opps/login")
 challenge = bytes.fromhex(req1.json())
-print(challenge)
 signer = pkcs1_15.new(RSA.import_key(anonTokenPrivKey))
 h = SHA384.new(challenge)
 challengeResponse = signer.sign(h).hex()

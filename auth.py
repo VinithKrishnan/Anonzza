@@ -6,6 +6,8 @@ import json
 import ast,uuid
 from user_obj import User
 from Crypto.PublicKey import RSA
+from Crypto.Signature import pkcs1_15
+from Crypto.Hash import SHA384
 from rsa_accumulator.main import verify_membership,__verify_membership
 
 def get_accumulator_value():
@@ -50,34 +52,33 @@ def check_request(req,challenge):
     acc_value = get_accumulator_value()
     N_value = get_N()
 
+    print("Verifier's view : ",acc_value,N_value,nonce,decoded_cred.uuid )
+
     if verify_membership(acc_value,decoded_cred.uuid,nonce,proof,N_value):
         print("Credential in Acc")
     else:
         print("Credential not in Acc")
         return (False, None)
 
-    #TODO: Check if the challenge is the correct value
     challengeResponse = req['challengeResponse']
-    prover_pubkey = cred.tokenPubKey
+    prover_pubkey = decoded_cred.tokenPubKey
 
-    verifier = pkcs1_15.new(prover_pubkey)
-    h = SHA384.new(challenge)
+    verifier = pkcs1_15.new(RSA.import_key(bytes.fromhex(prover_pubkey)))
+    h = SHA384.new(bytes.fromhex(challenge))
     success = False
 
     try:
         verifier.verify(h,bytes.fromhex(challengeResponse))
-        print("The signature is valid.")
+        print("The challenge response is valid.")
         success = True
     except ValueError:
-        print ("The signature is not valid.")
+        print("The challenge response is not valid.")
         success = False
 
-
-
-    name = None
+    user = None
     if isinstance(cred,NamedCredential):
-        name = User(cred.name,cred.user_type,cred.courses)
+        user = User(cred.name,cred.user_type,cred.courses)
     elif isinstance(cred,AnonymousCredential):
-        name = User("Anonymous",cred.user_type,cred.courses)
+        user = User("Anonymous",cred.user_type,cred.courses)
 
-    return (success, name)
+    return (success, user)
