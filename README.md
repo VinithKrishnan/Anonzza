@@ -1,6 +1,6 @@
 # anon-cred
 
-Selectively Revealing Bulletin Board Using Pseudonymous Credentials
+Selectively Identity Revealing Bulletin Board Using Pseudonymous Credentials
 
 CS498AM Fall 2019 course project
 
