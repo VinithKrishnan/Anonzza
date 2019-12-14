@@ -21,7 +21,7 @@ The prover code can be run using `python prover.py`(Test code:Refer to this for 
 The prover currently tests basic functionality i.e. fetches credentials for a sample user from the issuer, and makes an anonymous and a post with the user's identity linked to it.
 
 
-API documentation is available via Swagger, can be accessed at / for each service.
+API documentation is available via Swagger, can be accessed on the browser at / for each service.
 
 
 
