@@ -1,3 +1,7 @@
+#Issuer is currently only initialised by only one user to enable testing
+#The sample code can be run using netid - vinithk2
+
+
 from flask import Flask,  jsonify,request
 from flask_restplus import Resource,Api,fields,abort
 from werkzeug.contrib.fixers import ProxyFix
