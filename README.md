@@ -16,7 +16,7 @@ The issuer code lies in issuer.py, the issuer service can be started up at port 
 
 The verifier can be started up at port 5000 by running `python verifier.py`
 
-The prover code can be run using `python prover.py`(Test code:Refer to this for seqeunce of steps to take )
+The prover code can be run using `python prover.py`(Test code:Refer to this for sequence of steps to take )
 
 The prover currently tests basic functionality i.e. fetches credentials for a sample user from the issuer, and makes an anonymous and a post with the user's identity linked to it.
 
