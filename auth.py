@@ -40,7 +40,7 @@ def check_request(req,challenge):
     decoded_cred = CredentialDecoder().object_hook(cred)#json.loads(json.dumps(cred),cls=CredentialDecoder)
     public_key=get_pubkey() #have to check datatype
     verifyVal= decoded_cred.verify(public_key)
-    print(verifyVal)
+
     if verifyVal:
         print("Signature verification passed")
     else:
@@ -52,7 +52,7 @@ def check_request(req,challenge):
     acc_value = get_accumulator_value()
     N_value = get_N()
 
-    print("Verifier's view : ",acc_value,N_value,nonce,decoded_cred.uuid )
+    #print("Verifier's view : ",acc_value,N_value,nonce,decoded_cred.uuid )
 
     if verify_membership(acc_value,decoded_cred.uuid,nonce,proof,N_value):
         print("Credential in Acc")
@@ -76,7 +76,7 @@ def check_request(req,challenge):
         success = False
 
     user = None
-    print(type(decoded_cred))
+
     if isinstance(decoded_cred,NamedCredential):
         user = User(decoded_cred.name,decoded_cred.user_type,decoded_cred.courses)
     elif isinstance(decoded_cred,AnonymousCredential):

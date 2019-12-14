@@ -31,11 +31,13 @@ def login_required(f):
     def wrapper(*args, **kwargs):
         #Extract the proof portion and run it through the verifier
         if session['user'] is None:
+            print("No present session")
             abort(403)
         else:
             #Add course check here
             user = session['user']
             if request.view_args["courseid"] not in user.courses:
+                print("Course not present in credential")
                 abort(403)
 
         return f(*args, **kwargs)
@@ -72,8 +74,9 @@ class AddPost(Resource):
         """
         Used to create a new post on the bulletin board
         """
+        
         data = ast.literal_eval(request.data.decode('utf-8'))
-        if len(class_posts) == 0:
+        if courseid not in class_posts:
             class_posts[courseid] = [{'content' : data['content'],'author' : session['user'].name}]
         else:
             class_posts[courseid].append({'content' : data['content'],'author' : session['user'].name})

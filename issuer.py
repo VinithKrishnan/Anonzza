@@ -1,5 +1,5 @@
 from flask import Flask,  jsonify,request
-from flask_restplus import Resource,Api,fields
+from flask_restplus import Resource,Api,fields,abort
 from werkzeug.contrib.fixers import ProxyFix
 from accumulator import Accumulator,AccumulatorEncoder
 from Crypto.PublicKey import RSA
@@ -47,14 +47,37 @@ named_cred = api.model('NamedCred',{
     'signature':fields.Raw
 })
 
+user = api.model('User',{
+    'netId':fields.String,
+    'name':fields.String,
+    'user_type':fields.String,
+    'courses':fields.List(fields.String),
+    'anon_cred_id':fields.Integer,
+    'named_cred_id':fields.Integer
+})
+
 
 acc = Accumulator()
 
 registered_users = {}
 
-temp_user = UserObject("vin","student",["CS432","CS534"],123,456)
-registered_users["vinithk2"]=temp_user
-acc.addCredentials([123,456])
+#temp_user = UserObject("vin","student",["CS432","CS534"],123,456)
+#registered_users["vinithk2"]=temp_user
+#acc.addCredentials([123,456])
+
+@ns.route('/addUser')
+class AddUser(Resource):
+    @ns.doc('Used to add a new user to issuers records')
+    @ns.expect(user)
+    def post(self):
+        """
+        Used to add a new user to issuers records
+        """
+        temp_user = UserObject(request.json['name'],request.json['user_type'],request.json['courses'],request.json['anon_cred_id'],request.json['named_cred_id'])
+        registered_users[request.json['netId']] = temp_user
+        cred_id_list = [request.json['anon_cred_id'],request.json['named_cred_id']]
+        acc.addCredentials(cred_id_list)
+
 
 @ns.route('/currentAccumulator')
 class CurrentAccumulator(Resource):
@@ -81,7 +104,7 @@ class CurrentNonce(Resource):
     @ns.doc('Used to fetch value of n for the accumulator (Should be consolidated with the currentAccumulator API later)')
     def get(self):
         """
-        Used to fetch value of n for the accumulator (Should be consolidated with the currentAccumulator API later)
+        Used to fetch value of n for the accumulator
         """
         t = acc.n
         return json.dumps(t)
@@ -98,9 +121,9 @@ class PrivateAcc(Resource):
 
 @ns.route('/PubKey')
 class getPubKey(Resource):
-    @ns.doc('PubKey is used to get the public key of the issuer (Will be replaced by a keyring later)')
+    @ns.doc('PubKey is used to get the public key of the issuer ')
     def get(self):
-        """'PubKey is used to get the public key of the issuer (Will be replaced by a keyring later)'
+        """'PubKey is used to get the public key of the issuer'
         """
         #print(public_key.export_key())
         #return "hi"
@@ -114,23 +137,32 @@ class GetCredential(Resource):
         """Get credential is used to refresh current credentials for user
 
         """
-        print(request.json)
+
     #Here we pass a list of public keys as the input, and we get assigned 2 signed credentials
         anonTokKey = request.json['anonKey']
         namedTokKey = request.json['namedKey']
 
-        User = registered_users[netid]
+        if netid in registered_users:
+            User = registered_users[netid]
 
-        acc.removeCrendentials([User.anon_cred_id,User.named_cred_id])
-    
+            #remove old creds from accumulator
+            acc.removeCrendentials([User.anon_cred_id,User.named_cred_id])
+        else:
+            print("Netid not in issuer's database.")
+            print("Add user with the netid to database first using addUser API")
+            abort(403)
+
+        #create new anon credential
         new_anon_cred = AnonymousCredential(uuid.uuid4().int,User.user_type,User.courses,tokenPubKey=anonTokKey)
         new_anon_cred.sign(RSA.import_key(private_key))
 
+        #create new named cred
         new_named_cred = NamedCredential(uuid.uuid4().int,User.user_type,User.name,User.courses,tokenPubKey=namedTokKey)
         new_named_cred.sign(RSA.import_key(private_key))
 
         User.anon_cred_id = new_anon_cred.uuid
         User.named_cred_id = new_named_cred.uuid
+        #add new creds to accumulator
         acc.addCredentials([User.anon_cred_id,User.named_cred_id])
 
         return [CredentialEncoder().encode(new_anon_cred),CredentialEncoder().encode(new_named_cred)]
@@ -145,18 +177,85 @@ class AddCourse(Resource):
         Will return a list of signed credential objects
         """
 
-        data = ast.literal_eval(request.data.decode('utf-8'))
+        #data = ast.literal_eval(request.data.decode('utf-8'))
+        data=request.json
+
         user_netid = data['netid']
         new_courses = []
 
         for course in data['courses']:
             new_courses.append(course)
 
+        if user_netid not in registered_users:
+            print("Netid not in issuer's database.")
+            print("Add user with the netid to database first using addUser API.")
+            abort(403)
 
         User = registered_users[user_netid]
         prev_courses = User.courses
         final_courses = prev_courses + new_courses
 
+
+        #delete prev cred from accumulator
+        #prev_cred_list = []
+        #prev_cred_list.append(User.anon_cred_id)
+        #prev_cred_list.append(User.named_cred_id)
+        #acc.removeCrendentials(prev_cred_list)
+
+        #create new credentials
+        #TODO: use uuid64 to generate cred ids
+        #new_anon_cred_id = uuid.uuid4().int
+        #new_anon_cred = AnonymousCredential(new_anon_cred_id,User.user_type,final_courses)
+        #new_named_cred_id = uuid.uuid4().int
+        #new_named_cred = NamedCredential(new_named_cred_id,User.user_type,User.name,final_courses)
+
+        #sign credentials
+        #new_anon_cred.sign(RSA.import_key(private_key))
+        #new_named_cred.sign(RSA.import_key(private_key))
+
+        #add new creds to accumulator
+        #new_cred_list=[]
+        #new_cred_list.append(new_anon_cred_id)
+        #new_cred_list.append(new_named_cred_id)
+        #acc.addCredentials(new_cred_list)
+
+        #update registered_users
+        User.courses=final_courses
+        #User.anon_cred_id=new_anon_cred_id
+        #User.named_cred_id=new_named_cred_id
+        registered_users[user_netid]=User
+        #print("courses enrolled")
+        #print(registered_users[user_netid].courses)
+        #return credentials
+        #cred_list=[]
+        #cred_list.append(CredentialEncoder().encode(new_anon_cred))
+        #cred_list.append(CredentialEncoder().encode(new_named_cred))
+
+        #return json.dumps(cred_list)
+
+
+@ns.route('/dropCourses')
+class DropCourses(Resource):
+    @ns.doc('Drop Courses is used to drop user from registered courses')
+    @ns.expect(course_enr)
+    def post(self):
+        """Drop Courses is used to drop user from registered courses
+        """
+        data = request.json
+        user_netid = data['netid']
+
+        if user_netid not in registered_users:
+            print("Netid not in issuer's database.")
+            print("Add user with the netid to database first using addUser API.")
+            abort(403)
+
+        User = registered_users[user_netid]
+        prev_courses = User.courses
+        final_courses = prev_courses
+        #print(final_courses)
+
+        for course in data['courses']:
+            final_courses.remove(course)
 
         #delete prev cred from accumulator
         prev_cred_list = []
@@ -165,7 +264,6 @@ class AddCourse(Resource):
         acc.removeCrendentials(prev_cred_list)
 
         #create new credentials
-        #TODO: use uuid64 to generate cred ids
         new_anon_cred_id = uuid.uuid4().int
         new_anon_cred = AnonymousCredential(new_anon_cred_id,User.user_type,final_courses)
         new_named_cred_id = uuid.uuid4().int
@@ -188,65 +286,11 @@ class AddCourse(Resource):
         registered_users[user_netid]=User
 
         #return credentials
-        cred_list=[]
-        cred_list.append(CredentialEncoder().encode(new_anon_cred))
-        cred_list.append(CredentialEncoder().encode(new_named_cred))
+        #cred_list=[]
+        #cred_list.append(CredentialEncoder().encode(new_anon_cred))
+        #cred_list.append(CredentialEncoder().encode(new_anon_cred))
 
-        return json.dumps(cred_list)
-
-
-@ns.route('/dropCourses')
-class DropCourses(Resource):
-    @ns.doc('Drop Courses is used to drop user from registered courses')
-    @ns.expect(course_enr)
-    def post(self):
-        """Drop Courses is used to drop user from registered courses
-        """
-        data = api.payload
-        user_netid = data['netid']
-
-        User = registered_users[user_netid]
-        prev_courses = User.courses
-        final_courses = prev_courses
-        #print(final_courses)
-
-        for course in data['courses']:
-            final_courses.remove(course)
-
-        #delete prev cred from accumulator
-        prev_cred_list = []
-        prev_cred_list.append(User.anon_cred_id)
-        prev_cred_list.append(User.named_cred_id)
-        acc.removeCrendentials(prev_cred_list)
-
-        #create new credentials
-        new_anon_cred_id = randint(0,10000)
-        new_anon_cred = AnonymousCredential(new_anon_cred_id,User.user_type,final_courses)
-        new_named_cred_id = randint(0,10000)
-        new_named_cred = NamedCredential(new_named_cred_id,User.user_type,User.name,final_courses)
-
-        #sign credentials
-        new_anon_cred.sign(RSA.import_key(private_key))
-        new_named_cred.sign(RSA.import_key(private_key))
-
-        #add new creds to accumulator
-        new_cred_list=[]
-        new_cred_list.append(new_anon_cred_id)
-        new_cred_list.append(new_named_cred_id)
-        acc.addCredentials(new_cred_list)
-
-        #update registered_users
-        User.courses=final_courses
-        User.anon_cred_id=new_anon_cred_id
-        User.named_cred_id=new_named_cred_id
-        registered_users[user_netid]=User
-
-        #return credentials
-        cred_list=[]
-        cred_list.append(CredentialEncoder().encode(new_anon_cred))
-        cred_list.append(CredentialEncoder().encode(new_anon_cred))
-
-        return json.dumps(cred_list)
+        #return json.dumps(cred_list)
 
 if __name__ == '__main__':
     #trusted setup
