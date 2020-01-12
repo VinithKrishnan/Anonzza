@@ -40,7 +40,7 @@ class Accumulator:
     def getNonce(self):
         return self.nonce
 
-    
+
 
 
 class AccumulatorEncoder(JSONEncoder):
@@ -54,4 +54,4 @@ class AccumulatorEncoder(JSONEncoder):
             # raising exceptions for unsupported types
             return json.JSONEncoder.default(self, object)
 
-    #TODO: Find a way to decode/encode to JSON
+    
