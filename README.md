@@ -1,4 +1,5 @@
-#ANONZZA - Selective Identity Revealing Bulletin Board Using Pseudonymous Credentials
+
+# ANONZZA - Selective Identity Revealing Bulletin Board Using Pseudonymous Credentials
 
 
 ## Setting up the project
